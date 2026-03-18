@@ -443,18 +443,19 @@ function selectLoc(btn, loc) {
   if (loc !== '직접입력') updateBtn();
 }
 
-function buildFileName(index) {
-  const custom = document.getElementById('customLoc').value.trim();
-  const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
-  return `${dateKey}_${selectedClient}_${loc}_${String(index+1).padStart(3,'0')}.jpg`;
+function buildFileName(file, index) {
+  return `${dateKey}_${selectedClient}_${selectedWorker}_${file.loc}_${String(index+1).padStart(3,'0')}.jpg`;
 }
 
 function handleFiles(files) {
+  const custom = document.getElementById('customLoc').value.trim();
+  const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
+  if (!loc) { showToast('장소를 먼저 선택해주세요!', true); return; }
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      selectedFiles.push({ data: e.target.result, file });
+      selectedFiles.push({ data: e.target.result, file, loc: loc });
       renderPreviews(); updateBtn();
     };
     reader.readAsDataURL(file);
@@ -462,26 +463,26 @@ function handleFiles(files) {
 }
 
 function renderPreviews() {
-  const custom = document.getElementById('customLoc').value.trim();
-  const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
   document.getElementById('previewGrid').innerHTML = selectedFiles.map((f, i) => {
-    const fname = (selectedClient && loc) ? buildFileName(i) : `사진_${String(i+1).padStart(3,'0')}.jpg`;
+    const fname = (selectedClient && f.loc) ? buildFileName(f, i) : `사진_${String(i+1).padStart(3,'0')}.jpg`;
     return `<div class="preview-item">
       <img src="${f.data}" alt="">
       <div class="preview-label">${fname}</div>
       <button class="preview-remove" onclick="removePhoto(${i})">✕</button>
     </div>`;
   }).join('');
-  document.getElementById('photoCount').textContent = selectedFiles.length > 0 ? `${selectedFiles.length}장 선택됨` : '';
+  // 장소별 개수 요약
+  const summary = {};
+  selectedFiles.forEach(f => { if(f.loc) summary[f.loc] = (summary[f.loc]||0)+1; });
+  const summaryText = Object.entries(summary).map(([loc,cnt]) => `${loc} ${cnt}장`).join(' · ');
+  document.getElementById('photoCount').textContent = selectedFiles.length > 0 ? `총 ${selectedFiles.length}장 (${summaryText})` : '';
 }
 
 function removePhoto(i) { selectedFiles.splice(i, 1); renderPreviews(); updateBtn(); }
 
 function updateBtn() {
-  const custom = document.getElementById('customLoc').value.trim();
-  const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
   renderPreviews();
-  document.getElementById('submitBtn').disabled = !(accessToken && selectedWorker && selectedClient && loc && selectedFiles.length > 0);
+  document.getElementById('submitBtn').disabled = !(accessToken && selectedWorker && selectedClient && selectedFiles.length > 0);
 }
 
 async function submitUpload() {
@@ -493,12 +494,17 @@ async function submitUpload() {
   showProgress(true, '폴더 준비 중...', 0);
   const parentFolderName = `${dateKey}_${selectedClient}_${selectedWorker}`;
   const parentFolderId = await findOrCreateFolder(parentFolderName, FOLDER_ID);
-  const subFolderId = await findOrCreateFolder(loc, parentFolderId);
 
+  // 파일별 넘버링을 장소별로 관리
+  const locCounters = {};
   for (let i = 0; i < selectedFiles.length; i++) {
+    const f = selectedFiles[i];
+    locCounters[f.loc] = (locCounters[f.loc] || 0);
+    const fname = `${dateKey}_${selectedClient}_${selectedWorker}_${f.loc}_${String(locCounters[f.loc]+1).padStart(3,'0')}.jpg`;
+    locCounters[f.loc]++;
     updateProgress(`사진 업로드 중 (${i+1}/${selectedFiles.length})`, Math.round(((i+1)/selectedFiles.length)*90));
-    const renamed = new File([selectedFiles[i].file], buildFileName(i), { type: selectedFiles[i].file.type });
-    await uploadFileToDrive(renamed, subFolderId);
+    const renamed = new File([f.file], fname, { type: f.file.type });
+    await uploadFileToDrive(renamed, parentFolderId);
   }
 
   if (notes) {
@@ -507,18 +513,25 @@ async function submitUpload() {
   }
 
   updateProgress('완료!', 100);
-  uploads.unshift({ id: Date.now(), worker: selectedWorker, client: selectedClient, location: loc, notes, timestamp: dateLabel, folderId: parentFolderId, photoCount: selectedFiles.length });
+  const locSummary = [...new Set(selectedFiles.map(f=>f.loc))].join(', ');
+  uploads.unshift({ id: Date.now(), worker: selectedWorker, client: selectedClient, location: locSummary, notes, timestamp: dateLabel, folderId: parentFolderId, photoCount: selectedFiles.length });
   localStorage.setItem('driveUploads', JSON.stringify(uploads));
 
+  const uploadCount = selectedFiles.length;
   setTimeout(() => {
     showProgress(false);
-    showToast(`✓ ${selectedFiles.length}장 드라이브에 저장 완료!`);
+    showToast(`✓ ${uploadCount}장 드라이브에 저장 완료!`);
+    // 장소와 사진만 초기화 (직원·거래처는 유지)
     document.getElementById('notes').value = '';
     document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('customLocWrap').classList.remove('visible');
     document.getElementById('customLoc').value = '';
-    selectedLoc_ = ''; selectedFiles = [];
-    renderPreviews(); updateBtn();
+    document.getElementById('galleryInput').value = '';
+    document.getElementById('cameraInput').value = '';
+    selectedLoc_ = '';
+    selectedFiles = [];
+    renderPreviews();
+    updateBtn();
   }, 600);
 }
 
