@@ -10,7 +10,7 @@
   :root {
     --primary: #1a6b4a; --primary-light: #e8f5f0; --primary-mid: #2d9969;
     --bg: #f4f6f5; --card: #ffffff; --text: #1c2b24; --muted: #6b8c7a;
-    --border: #d4e3dc; --danger: #e24b4a; --danger-light: #fceaea;
+    --border: #d4e3dc; --danger: #e24b4a;
     --shadow: 0 2px 12px rgba(26,107,74,0.08);
   }
   body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -27,28 +27,40 @@
   .nav-tab.active { background: var(--primary); color: white; font-weight: 700; }
 
   .card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
-  .card-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; }
-  .card-label-btn { font-size: 11px; background: var(--primary-light); color: var(--primary); border: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; font-family: inherit; font-weight: 700; }
+  .card-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
 
-  input[type="text"], textarea, select {
+  input[type="text"], textarea {
     width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border);
     border-radius: 10px; font-size: 15px; font-family: inherit; color: var(--text);
-    background: var(--bg); outline: none; transition: border-color 0.2s; -webkit-appearance: none;
+    background: var(--bg); outline: none; transition: border-color 0.2s;
   }
-  input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--primary); background: white; }
+  input[type="text"]:focus, textarea:focus { border-color: var(--primary); background: white; }
   textarea { resize: none; min-height: 80px; }
 
-  /* Chip selector */
-  .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--border);
-    background: var(--bg); font-size: 13px; font-family: inherit; color: var(--muted);
-    cursor: pointer; transition: all 0.2s; font-weight: 500; white-space: nowrap;
+  /* Autocomplete */
+  .search-wrap { position: relative; }
+  .search-selected {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1rem; border: 1.5px solid var(--primary);
+    border-radius: 10px; background: var(--primary-light);
+    font-size: 15px; font-weight: 700; color: var(--primary);
   }
-  .chip:hover { border-color: var(--primary); color: var(--primary); }
-  .chip.selected { border-color: var(--primary); background: var(--primary); color: white; font-weight: 700; }
+  .search-clear { background: none; border: none; color: var(--primary); font-size: 20px; cursor: pointer; line-height: 1; padding: 0; font-weight: 400; }
+  .search-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1.5px solid var(--border); border-radius: 12px;
+    z-index: 50; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    max-height: 220px; overflow-y: auto;
+  }
+  .search-item { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .search-item:last-child { border-bottom: none; }
+  .search-item:hover { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+  .search-empty { padding: 14px 16px; font-size: 13px; color: var(--muted); text-align: center; }
 
-  /* Location grid */
+  /* Date */
+  .date-display { background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 10px; padding: 0.75rem 1rem; font-size: 15px; font-weight: 700; color: var(--primary); }
+
+  /* Location */
   .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .loc-btn { padding: 0.85rem 0.5rem; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); font-size: 13px; font-family: inherit; color: var(--muted); cursor: pointer; text-align: center; transition: all 0.2s; font-weight: 500; }
   .loc-btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -56,9 +68,6 @@
   .loc-emoji { font-size: 20px; display: block; margin-bottom: 4px; }
   .custom-loc-wrap { margin-top: 8px; display: none; }
   .custom-loc-wrap.visible { display: block; }
-
-  /* Date display */
-  .date-display { background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 10px; padding: 0.75rem 1rem; font-size: 15px; font-weight: 700; color: var(--primary); }
 
   /* Upload */
   .upload-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
@@ -93,19 +102,11 @@
   .toast { display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 700; z-index: 999; white-space: nowrap; }
   .toast.error { background: var(--danger); }
 
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; justify-content: center; }
-  .modal-overlay.show { display: flex; }
-  .modal { background: white; border-radius: 20px 20px 0 0; padding: 1.5rem; width: 100%; max-width: 540px; }
-  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 1rem; }
-  .modal-input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-  .modal-input-row input { flex: 1; }
-  .modal-add-btn { padding: 0 1rem; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
-  .modal-list { max-height: 200px; overflow-y: auto; }
-  .modal-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-  .modal-item:last-child { border-bottom: none; }
-  .modal-del { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 0 4px; }
-  .modal-close { width: 100%; margin-top: 1rem; padding: 0.75rem; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 700; font-family: inherit; color: var(--muted); cursor: pointer; }
+  /* Auth */
+  .auth-banner { background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; }
+  .auth-banner-text { flex: 1; font-size: 13px; color: var(--primary); }
+  .auth-banner-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .auth-btn { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
 
   /* Gallery */
   #gallery-view { display: none; }
@@ -116,30 +117,21 @@
   .filter-chip { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.2s; }
   .filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
   .gallery-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; }
-  .gallery-card-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .gallery-card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .gallery-card-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
   .gallery-card-meta { font-size: 12px; color: var(--muted); }
-  .gallery-card-name { font-size: 14px; font-weight: 700; }
-  .loc-badge { padding: 3px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; }
   .gallery-note { padding: 10px 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); }
   .gallery-link { padding: 10px 16px; font-size: 12px; border-top: 1px solid var(--border); }
   .gallery-link a { color: var(--primary); text-decoration: none; font-weight: 500; }
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
   .empty-icon { font-size: 40px; margin-bottom: 12px; }
 
-  /* Auth banner */
-  .auth-banner { background: var(--primary-light); border: 1.5px solid var(--primary); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; }
-  .auth-banner-text { flex: 1; font-size: 13px; color: var(--primary); }
-  .auth-banner-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
-  .auth-btn { padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
-
-  /* Manage view */
+  /* Manage */
   #manage-view { display: none; }
-  .manage-section { margin-bottom: 1.5rem; }
-  .manage-section-title { font-size: 15px; font-weight: 700; margin-bottom: 0.75rem; color: var(--text); }
-  .manage-list-item { display: flex; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; font-size: 14px; }
-  .manage-add-row { display: flex; gap: 8px; }
+  .manage-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
   .manage-add-row input { flex: 1; }
   .manage-add-btn { padding: 0 1rem; height: 48px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .manage-list-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; font-size: 14px; }
   .del-btn { background: none; border: none; color: var(--danger); font-size: 20px; cursor: pointer; line-height: 1; }
 </style>
 </head>
@@ -180,29 +172,35 @@
       <button class="auth-btn" onclick="signIn()">로그인</button>
     </div>
 
-    <!-- 날짜 -->
     <div class="card">
       <div class="card-label">📅 오늘 날짜</div>
       <div class="date-display" id="dateDisplay"></div>
     </div>
 
-    <!-- 직원 선택 -->
     <div class="card">
-      <div class="card-label">
-        👤 직원 선택
+      <div class="card-label">👤 직원 선택</div>
+      <div class="search-wrap">
+        <div class="search-selected" id="workerSelected" style="display:none;">
+          <span id="workerSelectedText"></span>
+          <button class="search-clear" onclick="clearSearch('worker')">×</button>
+        </div>
+        <input type="text" id="workerSearch" placeholder="이름 검색 후 선택..." oninput="filterList('worker')" onfocus="openDropdown('worker')" autocomplete="off">
+        <div class="search-dropdown" id="workerDropdown" style="display:none;"></div>
       </div>
-      <div class="chip-grid" id="workerChips"></div>
-      <div style="margin-top:8px; font-size:12px; color:var(--muted);">직원 추가/관리는 ⚙️ 관리 탭에서</div>
     </div>
 
-    <!-- 거래처 선택 -->
     <div class="card">
       <div class="card-label">🏢 거래처 선택</div>
-      <div class="chip-grid" id="clientChips"></div>
-      <div style="margin-top:8px; font-size:12px; color:var(--muted);">거래처 추가/관리는 ⚙️ 관리 탭에서</div>
+      <div class="search-wrap">
+        <div class="search-selected" id="clientSelected" style="display:none;">
+          <span id="clientSelectedText"></span>
+          <button class="search-clear" onclick="clearSearch('client')">×</button>
+        </div>
+        <input type="text" id="clientSearch" placeholder="거래처 검색 후 선택..." oninput="filterList('client')" onfocus="openDropdown('client')" autocomplete="off">
+        <div class="search-dropdown" id="clientDropdown" style="display:none;"></div>
+      </div>
     </div>
 
-    <!-- 장소 -->
     <div class="card">
       <div class="card-label">📍 청소 장소</div>
       <div class="location-grid">
@@ -220,11 +218,10 @@
       </div>
     </div>
 
-    <!-- 사진 -->
     <div class="card">
       <div class="card-label">🖼️ 현장 사진</div>
       <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" multiple accept="image/*" capture="environment" onchange="handleFiles(this.files)">
+        <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
         <div class="upload-icon">📷</div>
         <div class="upload-text">탭해서 사진 선택 또는 <strong>카메라로 찍기</strong></div>
         <div class="upload-text" style="font-size:12px;margin-top:4px;">파일명이 자동으로 지정돼요</div>
@@ -233,7 +230,6 @@
       <div class="photo-count" id="photoCount"></div>
     </div>
 
-    <!-- 메모 -->
     <div class="card">
       <div class="card-label">📝 메모 (선택)</div>
       <textarea id="notes" placeholder="특이사항을 입력하세요..." rows="3"></textarea>
@@ -253,17 +249,16 @@
   <!-- MANAGE VIEW -->
   <div id="manage-view">
     <div class="card">
-      <div class="manage-section-title">👤 직원 관리</div>
-      <div class="manage-add-row" style="margin-bottom:12px;">
+      <div class="card-label">👤 직원 관리</div>
+      <div class="manage-add-row">
         <input type="text" id="newWorkerInput" placeholder="직원 이름 입력">
         <button class="manage-add-btn" onclick="addWorker()">추가</button>
       </div>
       <div id="workerManageList"></div>
     </div>
-
     <div class="card">
-      <div class="manage-section-title">🏢 거래처 관리</div>
-      <div class="manage-add-row" style="margin-bottom:12px;">
+      <div class="card-label">🏢 거래처 관리</div>
+      <div class="manage-add-row">
         <input type="text" id="newClientInput" placeholder="거래처명 입력">
         <button class="manage-add-btn" onclick="addClient()">추가</button>
       </div>
@@ -290,7 +285,6 @@ let uploads = JSON.parse(localStorage.getItem('driveUploads') || '[]');
 let workers = JSON.parse(localStorage.getItem('workers') || '[]');
 let clients = JSON.parse(localStorage.getItem('clients') || '[]');
 
-// 날짜
 const now = new Date();
 const pad = n => String(n).padStart(2,'0');
 const dateKey = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
@@ -310,9 +304,17 @@ window.onload = () => {
     }
   });
   document.getElementById('authBanner').style.display = accessToken ? 'none' : 'flex';
-  renderWorkerChips();
-  renderClientChips();
   renderManageLists();
+
+  document.addEventListener('click', e => {
+    ['worker','client'].forEach(type => {
+      const input = document.getElementById(type + 'Search');
+      const dropdown = document.getElementById(type + 'Dropdown');
+      if (input && dropdown && !input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+  });
 };
 
 function signIn() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
@@ -329,50 +331,66 @@ function switchTab(tab) {
   if (tab === 'manage') renderManageLists();
 }
 
-// Worker chips
-function renderWorkerChips() {
-  const container = document.getElementById('workerChips');
-  if (workers.length === 0) {
-    container.innerHTML = '<div style="font-size:13px;color:var(--muted);">⚙️ 관리 탭에서 직원을 먼저 추가해주세요</div>';
-    return;
-  }
-  container.innerHTML = workers.map(w => `
-    <button class="chip ${selectedWorker===w?'selected':''}" onclick="selectWorker('${w}')">${w}</button>
-  `).join('');
+function openDropdown(type) {
+  const list = type === 'worker' ? workers : clients;
+  renderDropdown(type, list);
+  document.getElementById(type + 'Dropdown').style.display = 'block';
 }
 
-function selectWorker(name) {
-  selectedWorker = name;
-  renderWorkerChips();
+function filterList(type) {
+  const query = document.getElementById(type + 'Search').value.trim().toLowerCase();
+  const list = (type === 'worker' ? workers : clients).filter(item => item.toLowerCase().includes(query));
+  renderDropdown(type, list);
+  document.getElementById(type + 'Dropdown').style.display = 'block';
+}
+
+function renderDropdown(type, list) {
+  const dropdown = document.getElementById(type + 'Dropdown');
+  dropdown.innerHTML = list.length === 0
+    ? `<div class="search-empty">검색 결과 없음<br><span style="font-size:11px;">⚙️ 관리 탭에서 추가해주세요</span></div>`
+    : list.map(item => `<div class="search-item" onmousedown="selectItem('${type}','${item}')">${item}</div>`).join('');
+}
+
+function selectItem(type, value) {
+  if (type === 'worker') {
+    selectedWorker = value;
+    document.getElementById('workerSelectedText').textContent = '👤 ' + value;
+    document.getElementById('workerSelected').style.display = 'flex';
+    document.getElementById('workerSearch').style.display = 'none';
+    document.getElementById('workerDropdown').style.display = 'none';
+    document.getElementById('workerSearch').value = '';
+  } else {
+    selectedClient = value;
+    document.getElementById('clientSelectedText').textContent = '🏢 ' + value;
+    document.getElementById('clientSelected').style.display = 'flex';
+    document.getElementById('clientSearch').style.display = 'none';
+    document.getElementById('clientDropdown').style.display = 'none';
+    document.getElementById('clientSearch').value = '';
+  }
   updateBtn();
 }
 
-// Client chips
-function renderClientChips() {
-  const container = document.getElementById('clientChips');
-  if (clients.length === 0) {
-    container.innerHTML = '<div style="font-size:13px;color:var(--muted);">⚙️ 관리 탭에서 거래처를 먼저 추가해주세요</div>';
-    return;
+function clearSearch(type) {
+  if (type === 'worker') {
+    selectedWorker = '';
+    document.getElementById('workerSelected').style.display = 'none';
+    document.getElementById('workerSearch').style.display = 'block';
+    document.getElementById('workerSearch').value = '';
+  } else {
+    selectedClient = '';
+    document.getElementById('clientSelected').style.display = 'none';
+    document.getElementById('clientSearch').style.display = 'block';
+    document.getElementById('clientSearch').value = '';
   }
-  container.innerHTML = clients.map(c => `
-    <button class="chip ${selectedClient===c?'selected':''}" onclick="selectClient('${c}')">${c}</button>
-  `).join('');
-}
-
-function selectClient(name) {
-  selectedClient = name;
-  renderClientChips();
   updateBtn();
 }
 
-// Manage lists
 function addWorker() {
   const val = document.getElementById('newWorkerInput').value.trim();
   if (!val || workers.includes(val)) return;
   workers.push(val);
   localStorage.setItem('workers', JSON.stringify(workers));
   document.getElementById('newWorkerInput').value = '';
-  renderWorkerChips();
   renderManageLists();
 }
 
@@ -382,47 +400,32 @@ function addClient() {
   clients.push(val);
   localStorage.setItem('clients', JSON.stringify(clients));
   document.getElementById('newClientInput').value = '';
-  renderClientChips();
   renderManageLists();
 }
 
 function deleteWorker(name) {
   workers = workers.filter(w => w !== name);
   localStorage.setItem('workers', JSON.stringify(workers));
-  if (selectedWorker === name) selectedWorker = '';
-  renderWorkerChips();
+  if (selectedWorker === name) clearSearch('worker');
   renderManageLists();
-  updateBtn();
 }
 
 function deleteClient(name) {
   clients = clients.filter(c => c !== name);
   localStorage.setItem('clients', JSON.stringify(clients));
-  if (selectedClient === name) selectedClient = '';
-  renderClientChips();
+  if (selectedClient === name) clearSearch('client');
   renderManageLists();
-  updateBtn();
 }
 
 function renderManageLists() {
   document.getElementById('workerManageList').innerHTML = workers.length === 0
     ? '<div style="font-size:13px;color:var(--muted);padding:8px 0;">등록된 직원이 없어요</div>'
-    : workers.map(w => `
-      <div class="manage-list-item">
-        <span>👤 ${w}</span>
-        <button class="del-btn" onclick="deleteWorker('${w}')">×</button>
-      </div>`).join('');
-
+    : workers.map(w => `<div class="manage-list-item"><span>👤 ${w}</span><button class="del-btn" onclick="deleteWorker('${w}')">×</button></div>`).join('');
   document.getElementById('clientManageList').innerHTML = clients.length === 0
     ? '<div style="font-size:13px;color:var(--muted);padding:8px 0;">등록된 거래처가 없어요</div>'
-    : clients.map(c => `
-      <div class="manage-list-item">
-        <span>🏢 ${c}</span>
-        <button class="del-btn" onclick="deleteClient('${c}')">×</button>
-      </div>`).join('');
+    : clients.map(c => `<div class="manage-list-item"><span>🏢 ${c}</span><button class="del-btn" onclick="deleteClient('${c}')">×</button></div>`).join('');
 }
 
-// Location
 function selectLoc(btn, loc) {
   document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -431,12 +434,10 @@ function selectLoc(btn, loc) {
   if (loc !== '직접입력') updateBtn();
 }
 
-// File naming: YYYYMMDD_거래처_장소_001.jpg
 function buildFileName(index) {
   const custom = document.getElementById('customLoc').value.trim();
   const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
-  const num = String(index + 1).padStart(3, '0');
-  return `${dateKey}_${selectedClient}_${loc}_${num}.jpg`;
+  return `${dateKey}_${selectedClient}_${loc}_${String(index+1).padStart(3,'0')}.jpg`;
 }
 
 function handleFiles(files) {
@@ -444,9 +445,8 @@ function handleFiles(files) {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      selectedFiles.push({ data: e.target.result, file, name: file.name });
-      renderPreviews();
-      updateBtn();
+      selectedFiles.push({ data: e.target.result, file });
+      renderPreviews(); updateBtn();
     };
     reader.readAsDataURL(file);
   });
@@ -457,8 +457,7 @@ function renderPreviews() {
   const loc = selectedLoc_ === '직접입력' ? custom : selectedLoc_;
   document.getElementById('previewGrid').innerHTML = selectedFiles.map((f, i) => {
     const fname = (selectedClient && loc) ? buildFileName(i) : `사진_${String(i+1).padStart(3,'0')}.jpg`;
-    return `
-    <div class="preview-item">
+    return `<div class="preview-item">
       <img src="${f.data}" alt="">
       <div class="preview-label">${fname}</div>
       <button class="preview-remove" onclick="removePhoto(${i})">✕</button>
@@ -476,7 +475,6 @@ function updateBtn() {
   document.getElementById('submitBtn').disabled = !(accessToken && selectedWorker && selectedClient && loc && selectedFiles.length > 0);
 }
 
-// Upload
 async function submitUpload() {
   if (!accessToken) { showToast('먼저 로그인해 주세요', true); return; }
   const custom = document.getElementById('customLoc').value.trim();
@@ -484,21 +482,14 @@ async function submitUpload() {
   const notes = document.getElementById('notes').value.trim();
 
   showProgress(true, '폴더 준비 중...', 0);
+  const parentFolderName = `${dateKey}_${selectedClient}_${selectedWorker}`;
+  const parentFolderId = await findOrCreateFolder(parentFolderName, FOLDER_ID);
+  const subFolderId = await findOrCreateFolder(loc, parentFolderId);
 
-  // 날짜 폴더 → 거래처 폴더
-  const dateFolderId = await findOrCreateFolder(dateKey, FOLDER_ID);
-  const clientFolderId = await findOrCreateFolder(selectedClient, dateFolderId);
-  const subFolderName = `${loc}_${selectedWorker}`;
-  const subFolderId = await findOrCreateFolder(subFolderName, clientFolderId);
-
-  const photoUrls = [];
   for (let i = 0; i < selectedFiles.length; i++) {
     updateProgress(`사진 업로드 중 (${i+1}/${selectedFiles.length})`, Math.round(((i+1)/selectedFiles.length)*90));
-    const fname = buildFileName(i);
-    // Rename file
-    const renamed = new File([selectedFiles[i].file], fname, { type: selectedFiles[i].file.type });
-    const url = await uploadFileToDrive(renamed, subFolderId);
-    if (url) photoUrls.push(url);
+    const renamed = new File([selectedFiles[i].file], buildFileName(i), { type: selectedFiles[i].file.type });
+    await uploadFileToDrive(renamed, subFolderId);
   }
 
   if (notes) {
@@ -507,13 +498,7 @@ async function submitUpload() {
   }
 
   updateProgress('완료!', 100);
-
-  const record = {
-    id: Date.now(), worker: selectedWorker, client: selectedClient,
-    location: loc, notes, timestamp: dateLabel,
-    folderId: subFolderId, photoCount: selectedFiles.length
-  };
-  uploads.unshift(record);
+  uploads.unshift({ id: Date.now(), worker: selectedWorker, client: selectedClient, location: loc, notes, timestamp: dateLabel, folderId: parentFolderId, photoCount: selectedFiles.length });
   localStorage.setItem('driveUploads', JSON.stringify(uploads));
 
   setTimeout(() => {
@@ -530,40 +515,28 @@ async function submitUpload() {
 
 async function findOrCreateFolder(name, parentId) {
   const q = `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, { headers: { Authorization: `Bearer ${accessToken}` } });
   const data = await res.json();
   if (data.files && data.files.length > 0) return data.files[0].id;
   const create = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
   });
-  const folder = await create.json();
-  return folder.id;
+  return (await create.json()).id;
 }
 
 async function uploadFileToDrive(file, folderId) {
-  const meta = { name: file.name, parents: [folderId] };
   const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  form.append('metadata', new Blob([JSON.stringify({ name: file.name, parents: [folderId] })], { type: 'application/json' }));
   form.append('file', file);
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
-    method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form
-  });
-  const data = await res.json();
-  return data.webViewLink || null;
+  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
 }
 
 async function uploadTextToDrive(name, content, folderId) {
-  const meta = { name, parents: [folderId] };
   const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  form.append('metadata', new Blob([JSON.stringify({ name, parents: [folderId] })], { type: 'application/json' }));
   form.append('file', new Blob([content], { type: 'text/plain' }));
-  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-    method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form
-  });
+  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
 }
 
 function showProgress(show, text='', pct=0) {
@@ -584,8 +557,8 @@ function showToast(msg, error=false) {
 
 function renderGallery(filter) {
   const filtered = filter ? uploads.filter(u => u.client === filter) : uploads;
-  const clients_ = ['전체', ...new Set(uploads.map(u => u.client))];
-  document.getElementById('filterRow').innerHTML = clients_.map(c => `
+  const allClients = ['전체', ...new Set(uploads.map(u => u.client))];
+  document.getElementById('filterRow').innerHTML = allClients.map(c => `
     <button class="filter-chip ${(!filter && c==='전체') || filter===c ? 'active' : ''}"
       onclick="renderGallery(${c==='전체' ? 'null' : `'${c}'`})">${c}</button>`).join('');
   const content = document.getElementById('galleryContent');
@@ -596,19 +569,14 @@ function renderGallery(filter) {
   content.innerHTML = filtered.map(u => `
     <div class="gallery-card">
       <div class="gallery-card-header">
-        <div>
-          <div class="gallery-card-name">🏢 ${u.client} · 👤 ${u.worker}</div>
-          <div class="gallery-card-meta">${u.timestamp} · 📍 ${u.location} · 사진 ${u.photoCount}장</div>
-        </div>
+        <div class="gallery-card-name">🏢 ${u.client} · 👤 ${u.worker}</div>
+        <div class="gallery-card-meta">${u.timestamp} · 📍 ${u.location} · 사진 ${u.photoCount}장</div>
       </div>
       ${u.notes ? `<div class="gallery-note">💬 ${u.notes}</div>` : ''}
-      <div class="gallery-link">
-        <a href="https://drive.google.com/drive/folders/${u.folderId}" target="_blank">📁 드라이브에서 사진 보기 →</a>
-      </div>
+      <div class="gallery-link"><a href="https://drive.google.com/drive/folders/${u.folderId}" target="_blank">📁 드라이브에서 사진 보기 →</a></div>
     </div>`).join('');
 }
 
-// Enter key for manage inputs
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     if (document.activeElement.id === 'newWorkerInput') addWorker();
