@@ -70,12 +70,13 @@
   .custom-loc-wrap.visible { display: block; }
 
   /* Upload */
-  .upload-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
-  .upload-zone:hover { border-color: var(--primary); background: var(--primary-light); }
-  .upload-zone input { display: none; }
-  .upload-icon { font-size: 32px; margin-bottom: 8px; }
-  .upload-text { font-size: 14px; color: var(--muted); }
-  .upload-text strong { color: var(--primary); }
+  .upload-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .upload-btn { border: 2px dashed var(--border); border-radius: 14px; padding: 1.25rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); font-family: inherit; width: 100%; }
+  .upload-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+  .upload-btn input { display: none; }
+  .upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .upload-label { font-size: 13px; font-weight: 700; color: var(--primary); display: block; }
+  .upload-sub { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
   .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
   .preview-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
   .preview-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -220,11 +221,19 @@
 
     <div class="card">
       <div class="card-label">🖼️ 현장 사진</div>
-      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">탭해서 사진 선택 또는 <strong>카메라로 찍기</strong></div>
-        <div class="upload-text" style="font-size:12px;margin-top:4px;">파일명이 자동으로 지정돼요</div>
+      <div class="upload-btn-row">
+        <button class="upload-btn" onclick="document.getElementById('galleryInput').click()">
+          <input type="file" id="galleryInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+          <div class="upload-icon">🖼️</div>
+          <span class="upload-label">갤러리에서 선택</span>
+          <span class="upload-sub">찍어둔 사진 불러오기</span>
+        </button>
+        <button class="upload-btn" onclick="document.getElementById('cameraInput').click()">
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFiles(this.files)">
+          <div class="upload-icon">📷</div>
+          <span class="upload-label">카메라로 찍기</span>
+          <span class="upload-sub">지금 바로 촬영</span>
+        </button>
       </div>
       <div class="preview-grid" id="previewGrid"></div>
       <div class="photo-count" id="photoCount"></div>
