@@ -299,20 +299,47 @@ const pad = n => String(n).padStart(2,'0');
 const dateKey = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
 const dateLabel = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${['일','월','화','수','목','금','토'][now.getDay()]})`;
 
+function saveToken(token) {
+  const expiry = Date.now() + 55 * 60 * 1000; // 55분 후 만료
+  localStorage.setItem('gToken', JSON.stringify({ token, expiry }));
+}
+
+function loadToken() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('gToken'));
+    if (saved && saved.expiry > Date.now()) return saved.token;
+  } catch(e) {}
+  return null;
+}
+
+function setLoggedIn(token) {
+  accessToken = token;
+  saveToken(token);
+  document.getElementById('authBanner').style.display = 'none';
+  updateBtn();
+}
+
 window.onload = () => {
   document.getElementById('dateDisplay').textContent = dateLabel;
   document.getElementById('headerDate').textContent = dateLabel;
+
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID, scope: SCOPES,
     callback: (resp) => {
       if (resp.error) { showToast('로그인 실패: ' + resp.error, true); return; }
-      accessToken = resp.access_token;
-      document.getElementById('authBanner').style.display = 'none';
+      setLoggedIn(resp.access_token);
       showToast('✓ 로그인 완료!');
-      updateBtn();
     }
   });
-  document.getElementById('authBanner').style.display = accessToken ? 'none' : 'flex';
+
+  // 저장된 토큰 자동 복원
+  const saved = loadToken();
+  if (saved) {
+    setLoggedIn(saved);
+  } else {
+    document.getElementById('authBanner').style.display = 'flex';
+  }
+
   renderManageLists();
 
   document.addEventListener('click', e => {
