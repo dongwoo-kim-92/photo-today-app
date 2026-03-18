@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>현장 사진 업로드</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #1a6b4a;
+    --primary-light: #e8f5f0;
+    --primary-mid: #2d9969;
+    --bg: #f4f6f5;
+    --card: #ffffff;
+    --text: #1c2b24;
+    --muted: #6b8c7a;
+    --border: #d4e3dc;
+    --shadow: 0 2px 12px rgba(26,107,74,0.08);
+  }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header {
+    background: var(--primary); color: white;
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .header h1 { font-size: 17px; font-weight: 700; }
+  .header p { font-size: 12px; opacity: 0.8; margin-top: 1px; }
+
+  .container { max-width: 540px; margin: 0 auto; padding: 1.25rem 1rem 6rem; }
+
+  .nav-tabs { display: flex; background: var(--card); border-radius: 12px; padding: 4px; border: 1px solid var(--border); margin-bottom: 1.25rem; }
+  .nav-tab { flex: 1; padding: 8px; border: none; background: transparent; border-radius: 9px; font-size: 13px; font-weight: 500; font-family: inherit; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+  .nav-tab.active { background: var(--primary); color: white; font-weight: 700; }
+
+  .card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+
+  input[type="text"], textarea {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 15px; font-family: inherit; color: var(--text);
+    background: var(--bg); outline: none; transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: var(--primary); background: white; }
+  textarea { resize: none; min-height: 80px; }
+
+  .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .loc-btn {
+    padding: 0.85rem 0.5rem; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--bg); font-size: 13px; font-family: inherit; color: var(--muted);
+    cursor: pointer; text-align: center; transition: all 0.2s; font-weight: 500;
+  }
+  .loc-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .loc-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
+  .loc-emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+  .custom-loc-wrap { margin-top: 8px; display: none; }
+  .custom-loc-wrap.visible { display: block; }
+
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 14px;
+    padding: 2rem 1rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: var(--bg);
+  }
+  .upload-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .upload-text { font-size: 14px; color: var(--muted); }
+  .upload-text strong { color: var(--primary); }
+
+  .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .preview-item { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,0.65); color: white; border: none;
+    font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .photo-count { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: right; }
+
+  .submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); padding: 1rem; }
+  .submit-btn {
+    width: 100%; max-width: 540px; margin: 0 auto; display: block;
+    padding: 1rem; background: var(--primary); color: white; border: none;
+    border-radius: 14px; font-size: 16px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .submit-btn:hover { background: var(--primary-mid); }
+  .submit-btn:disabled { background: var(--border); color: var(--muted); cursor: default; }
+
+  /* Progress overlay */
+  .progress-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .progress-overlay.show { display: flex; }
+  .progress-box {
+    background: white; border-radius: 20px; padding: 2rem;
+    width: 300px; text-align: center;
+  }
+  .progress-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .progress-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+  .progress-bar-wrap { background: var(--bg); border-radius: 999px; height: 8px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--primary); border-radius: 999px; transition: width 0.3s; width: 0%; }
+  .progress-count { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* Toast */
+  .toast {
+    display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: white; padding: 12px 24px;
+    border-radius: 999px; font-size: 14px; font-weight: 700;
+    z-index: 999; white-space: nowrap;
+  }
+  .toast.error { background: #e24b4a; }
+
+  /* Gallery */
+  #gallery-view { display: none; }
+  .gallery-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .gallery-header h2 { font-size: 17px; font-weight: 700; }
+  .filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 1rem; scrollbar-width: none; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border);
+    background: var(--card); font-size: 12px; font-weight: 500; color: var(--muted);
+    cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.2s;
+  }
+  .filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+  .gallery-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; }
+  .gallery-card-header { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .gallery-card-meta { font-size: 12px; color: var(--muted); }
+  .gallery-card-name { font-size: 14px; font-weight: 700; }
+  .loc-badge { padding: 3px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; }
+  .gallery-imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; }
+  .gallery-imgs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; cursor: pointer; }
+  .gallery-note { padding: 10px 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); }
+  .gallery-link { padding: 10px 16px; font-size: 12px; border-top: 1px solid var(--border); }
+  .gallery-link a { color: var(--primary); text-decoration: none; font-weight: 500; }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* Auth button */
+  .auth-banner {
+    background: var(--primary-light); border: 1.5px solid var(--primary);
+    border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .auth-banner-text { flex: 1; font-size: 13px; color: var(--primary); }
+  .auth-banner-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+  .auth-btn {
+    padding: 8px 16px; background: var(--primary); color: white;
+    border: none; border-radius: 10px; font-size: 13px; font-weight: 700;
+    font-family: inherit; cursor: pointer; white-space: nowrap;
+  }
+
+  /* Lightbox */
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+  .lightbox-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: white; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📸</div>
+  <div>
+    <h1>현장 사진 업로드</h1>
+    <p>구글 드라이브 연동</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-box">
+    <div class="progress-title">📤 업로드 중...</div>
+    <div class="progress-sub" id="progressSub">구글 드라이브에 저장하고 있어요</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-count" id="progressCount"></div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<div class="container">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('upload')">📤 업로드</button>
+    <button class="nav-tab" onclick="switchTab('gallery')">🗂 현장 갤러리</button>
+  </div>
+
+  <!-- UPLOAD VIEW -->
+  <div id="upload-view">
+
+    <!-- 구글 로그인 배너 -->
+    <div class="auth-banner" id="authBanner">
+      <div class="auth-banner-text">
+        <strong>🔐 구글 계정 로그인 필요</strong>
+        사진을 드라이브에 저장하려면 로그인해 주세요
+      </div>
+      <button class="auth-btn" onclick="signIn()">로그인</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">👤 직원 이름</div>
+      <input type="text" id="workerName" placeholder="이름을 입력하세요" oninput="updateBtn()">
+    </div>
+
+    <div class="card">
+      <div class="card-label">📍 청소 장소</div>
+      <div class="location-grid">
+        <button class="loc-btn" onclick="selectLoc(this,'거실')"><span class="loc-emoji">🛋️</span>거실</button>
+        <button class="loc-btn" onclick="selectLoc(this,'주방')"><span class="loc-emoji">🍳</span>주방</button>
+        <button class="loc-btn" onclick="selectLoc(this,'욕실')"><span class="loc-emoji">🚿</span>욕실</button>
+        <button class="loc-btn" onclick="selectLoc(this,'침실')"><span class="loc-emoji">🛏️</span>침실</button>
+        <button class="loc-btn" onclick="selectLoc(this,'베란다')"><span class="loc-emoji">🪴</span>베란다</button>
+        <button class="loc-btn" onclick="selectLoc(this,'현관')"><span class="loc-emoji">🚪</span>현관</button>
+        <button class="loc-btn" onclick="selectLoc(this,'전체')"><span class="loc-emoji">🏠</span>전체</button>
+        <button class="loc-btn" onclick="selectLoc(this,'직접입력')"><span class="loc-emoji">✏️</span>직접입력</button>
+      </div>
+      <div class="custom-loc-wrap" id="customLocWrap">
+        <input type="text" id="customLoc" placeholder="장소명 입력" oninput="updateBtn()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">🖼️ 현장 사진</div>
+      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" multiple accept="image/*" capture="environment" onchange="handleFiles(this.files)">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">탭해서 사진 선택 또는 <strong>카메라로 찍기</strong></div>
+        <div class="upload-text" style="font-size:12px;margin-top:4px;">여러 장 동시 선택 가능</div>
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
+      <div class="photo-count" id="photoCount"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">📝 메모 (선택)</div>
+      <textarea id="notes" placeholder="특이사항이나 전달할 내용을 입력하세요..." rows="3"></textarea>
+    </div>
+  </div>
+
+  <!-- GALLERY VIEW -->
+  <div id="gallery-view">
+    <div class="gallery-header">
+      <h2>현장 기록</h2>
+      <a href="https://drive.google.com/drive/folders/1gWSAVwiwe6cRKYmNE2Q3KOY15T-ubA39" target="_blank" style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:500;">📁 드라이브 열기</a>
+    </div>
+    <div class="filter-row" id="filterRow"></div>
+    <div id="galleryContent"></div>
+  </div>
+</div>
+
+<div class="submit-bar" id="submitBar">
+  <button class="submit-btn" id="submitBtn" onclick="submitUpload()" disabled>업로드하기</button>
+</div>
+
+<!-- Google API -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script>
+const CLIENT_ID = '967996916885-jik0ba1t8ll5rrl3ubh7us93entltg3h.apps.googleusercontent.com';
+const FOLDER_ID = '1gWSAVwiwe6cRKYmNE2Q3KOY15T-ubA39';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+let tokenClient;
+let accessToken = null;
+let selectedLoc = '';
+let selectedFiles = [];
+let uploads = JSON.parse(localStorage.getItem('driveUploads') || '[]');
+
+// Init Google
+window.onload = () => {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) { showToast('로그인 실패: ' + resp.error, true); return; }
+      accessToken = resp.access_token;
+      document.getElementById('authBanner').style.display = 'none';
+      showToast('✓ 로그인 완료!');
+      updateBtn();
+    }
+  });
+  updateAuthUI();
+};
+
+function signIn() {
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function updateAuthUI() {
+  document.getElementById('authBanner').style.display = accessToken ? 'none' : 'flex';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach((t, i) => t.classList.toggle('active', (i===0)===(tab==='upload')));
+  document.getElementById('upload-view').style.display = tab === 'upload' ? 'block' : 'none';
+  document.getElementById('gallery-view').style.display = tab === 'gallery' ? 'block' : 'none';
+  document.getElementById('submitBar').style.display = tab === 'upload' ? 'block' : 'none';
+  if (tab === 'gallery') renderGallery();
+}
+
+function selectLoc(btn, loc) {
+  document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedLoc = loc;
+  document.getElementById('customLocWrap').classList.toggle('visible', loc === '직접입력');
+  if (loc !== '직접입력') updateBtn();
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedFiles.push({ data: e.target.result, file: file, name: file.name });
+      renderPreviews();
+      updateBtn();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreviews() {
+  document.getElementById('previewGrid').innerHTML = selectedFiles.map((f, i) => `
+    <div class="preview-item">
+      <img src="${f.data}" alt="">
+      <button class="preview-remove" onclick="removePhoto(${i})">✕</button>
+    </div>`).join('');
+  document.getElementById('photoCount').textContent = selectedFiles.length > 0 ? `${selectedFiles.length}장 선택됨` : '';
+}
+
+function removePhoto(i) { selectedFiles.splice(i, 1); renderPreviews(); updateBtn(); }
+
+function updateBtn() {
+  const name = document.getElementById('workerName').value.trim();
+  const custom = document.getElementById('customLoc').value.trim();
+  const loc = selectedLoc === '직접입력' ? custom : selectedLoc;
+  document.getElementById('submitBtn').disabled = !(accessToken && name && loc && selectedFiles.length > 0);
+}
+
+async function submitUpload() {
+  if (!accessToken) { showToast('먼저 로그인해 주세요', true); return; }
+  const name = document.getElementById('workerName').value.trim();
+  const custom = document.getElementById('customLoc').value.trim();
+  const loc = selectedLoc === '직접입력' ? custom : selectedLoc;
+  const notes = document.getElementById('notes').value.trim();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','');
+  const timeStr = now.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+
+  // 1. 날짜 폴더 찾거나 만들기
+  showProgress(true, '폴더 준비 중...', 0);
+  const dateFolderName = dateStr;
+  let dateFolderId = await findOrCreateFolder(dateFolderName, FOLDER_ID);
+
+  // 2. 현장 폴더 만들기 (장소_이름_시간)
+  const subFolderName = `${loc}_${name}_${timeStr.replace(':','')}`;
+  let subFolderId = await findOrCreateFolder(subFolderName, dateFolderId);
+
+  // 3. 사진 업로드
+  const photoUrls = [];
+  for (let i = 0; i < selectedFiles.length; i++) {
+    updateProgress(`사진 업로드 중 (${i+1}/${selectedFiles.length})`, Math.round(((i+1)/selectedFiles.length)*90));
+    const url = await uploadFileToDrive(selectedFiles[i].file, subFolderId);
+    if (url) photoUrls.push(url);
+  }
+
+  // 4. 메모 파일 저장
+  if (notes) {
+    const content = `직원: ${name}\n장소: ${loc}\n시간: ${dateStr} ${timeStr}\n\n메모:\n${notes}`;
+    await uploadTextToDrive('메모.txt', content, subFolderId);
+  }
+
+  updateProgress('완료!', 100);
+
+  // 5. 로컬 기록 저장
+  const record = {
+    id: Date.now(), worker: name, location: loc, notes,
+    timestamp: `${dateStr} ${timeStr}`,
+    folderId: subFolderId,
+    photoCount: selectedFiles.length
+  };
+  uploads.unshift(record);
+  localStorage.setItem('driveUploads', JSON.stringify(uploads));
+
+  setTimeout(() => {
+    showProgress(false);
+    showToast(`✓ ${selectedFiles.length}장 드라이브에 저장 완료!`);
+    // Reset
+    document.getElementById('workerName').value = '';
+    document.getElementById('notes').value = '';
+    document.querySelectorAll('.loc-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('customLocWrap').classList.remove('visible');
+    document.getElementById('customLoc').value = '';
+    selectedLoc = ''; selectedFiles = [];
+    renderPreviews(); updateBtn();
+  }, 600);
+}
+
+async function findOrCreateFolder(name, parentId) {
+  // Search
+  const q = `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  const data = await res.json();
+  if (data.files && data.files.length > 0) return data.files[0].id;
+
+  // Create
+  const create = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+  });
+  const folder = await create.json();
+  return folder.id;
+}
+
+async function uploadFileToDrive(file, folderId) {
+  const meta = { name: file.name, parents: [folderId] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  form.append('file', file);
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: form
+  });
+  const data = await res.json();
+  return data.webViewLink || null;
+}
+
+async function uploadTextToDrive(name, content, folderId) {
+  const meta = { name, parents: [folderId] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+  form.append('file', new Blob([content], { type: 'text/plain' }));
+  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: form
+  });
+}
+
+function showProgress(show, text='', pct=0) {
+  document.getElementById('progressOverlay').classList.toggle('show', show);
+  if (text) document.getElementById('progressSub').textContent = text;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateProgress(text, pct) {
+  document.getElementById('progressSub').textContent = text;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function showToast(msg, error=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error ? ' error' : '');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function renderGallery(filter) {
+  const filtered = filter ? uploads.filter(u => u.location === filter) : uploads;
+  const locs = ['전체', ...new Set(uploads.map(u => u.location))];
+  document.getElementById('filterRow').innerHTML = locs.map(l => `
+    <button class="filter-chip ${(!filter && l==='전체') || filter===l ? 'active' : ''}"
+      onclick="renderGallery(${l==='전체' ? 'null' : `'${l}'`})">${l}</button>`).join('');
+
+  const content = document.getElementById('galleryContent');
+  if (filtered.length === 0) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><p>아직 업로드된 기록이 없어요</p></div>`;
+    return;
+  }
+  content.innerHTML = filtered.map(u => `
+    <div class="gallery-card">
+      <div class="gallery-card-header">
+        <div>
+          <div class="gallery-card-name">👤 ${u.worker}</div>
+          <div class="gallery-card-meta">${u.timestamp} · 사진 ${u.photoCount}장</div>
+        </div>
+        <span class="loc-badge">📍 ${u.location}</span>
+      </div>
+      ${u.notes ? `<div class="gallery-note">💬 ${u.notes}</div>` : ''}
+      <div class="gallery-link">
+        <a href="https://drive.google.com/drive/folders/${u.folderId}" target="_blank">📁 드라이브에서 사진 보기 →</a>
+      </div>
+    </div>`).join('');
+}
+
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+</script>
+</body>
+</html>
